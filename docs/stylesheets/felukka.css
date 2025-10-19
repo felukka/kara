@@ -1,0 +1,48 @@
+/* Felukka brand: same tokens as Koptan UI (web/plugins/koptan-react/src/styles/tokens.css). */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap");
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-header__title {
+  font-family: "Space Grotesk", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 210;
+  --md-default-bg-color: #0e1419;
+  --md-default-fg-color: #dde3ea;
+  --md-default-fg-color--light: #c3c7ce;
+  --md-default-fg-color--lighter: #8d9198;
+  --md-default-fg-color--lightest: #43474d;
+  --md-primary-fg-color: #161c22;
+  --md-primary-fg-color--light: #242b30;
+  --md-primary-fg-color--dark: #0e1419;
+  --md-primary-bg-color: #eac07d;
+  --md-primary-bg-color--light: #c3c7ce;
+  --md-accent-fg-color: #eac07d;
+  --md-accent-fg-color--transparent: rgb(234 192 125 / 0.1);
+  --md-typeset-a-color: #eac07d;
+  --md-code-bg-color: #161c22;
+  --md-footer-bg-color: #161c22;
+  --md-footer-bg-color--dark: #0e1419;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #0e1419;
+  --md-primary-fg-color--light: #242b30;
+  --md-primary-fg-color--dark: #0e1419;
+  --md-primary-bg-color: #eac07d;
+  --md-primary-bg-color--light: #c3c7ce;
+  --md-accent-fg-color: #7a5a1f;
+  --md-accent-fg-color--transparent: rgb(122 90 31 / 0.1);
+  --md-typeset-a-color: #7a5a1f;
+  --md-code-bg-color: #f7f8fa;
+  --md-footer-bg-color: #0e1419;
+  --md-footer-bg-color--dark: #090f14;
+}

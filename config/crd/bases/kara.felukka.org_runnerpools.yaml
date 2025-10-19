@@ -1,0 +1,466 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: runnerpools.kara.felukka.org
+spec:
+  group: kara.felukka.org
+  names:
+    kind: RunnerPool
+    listKind: RunnerPoolList
+    plural: runnerpools
+    singular: runnerpool
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.connectionStatus
+      name: Status
+      type: string
+    - jsonPath: .spec.pool
+      name: Pool
+      type: string
+    - jsonPath: .status.organizationName
+      name: Organization
+      type: string
+    - jsonPath: .status.queuedJobs
+      name: Queued
+      type: integer
+    - jsonPath: .status.agentsSummary
+      name: Agents
+      type: string
+    - jsonPath: .status.runningAgents
+      name: Running
+      type: integer
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: RunnerPool is the Schema for the runnerpools API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: RunnerPoolSpec defines the desired state of a RunnerPool.
+            properties:
+              azUrl:
+                description: |-
+                  AzURL is the Azure DevOps organization URL.
+                  Examples:
+                    Cloud:      https://dev.azure.com/my-org
+                    On-prem:    https://tfs.company.com/tfs/CollectionName
+                pattern: ^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$
+                type: string
+              capabilities:
+                additionalProperties:
+                  type: string
+                description: |-
+                  Capabilities are registered with the agent as default
+                  capabilities (e.g. {"os": "linux"}). They are passed to the agent
+                  as Agent.<name> environment variables so the agent registers them
+                  with Azure DevOps. In non-capability-aware mode these are ignored.
+                type: object
+              capabilityAware:
+                description: |-
+                  CapabilityAware enables per-capability autoscaling.
+                  When true, the operator inspects queued jobs for required capabilities
+                  and deploys agents with matching images from CapabilityImages.
+                type: boolean
+              capabilityImages:
+                additionalProperties:
+                  type: string
+                description: |-
+                  CapabilityImages maps capability names to agent container images.
+                  When capabilityAware is true, the operator creates agents with specific
+                  images based on what capabilities the jobs in the queue demand.
+                  Example: capabilityImages: {docker: "my-registry/agent:docker", kubernetes: "my-registry/agent:k8s"}
+                type: object
+              certTrustStore:
+                description: |-
+                  CertTrustStore lists TLS secrets to mount into the agent as trusted
+                  certificates at /etc/ssl/certs/<secretName>.crt (the secret must
+                  contain a tls.crt key).
+                items:
+                  description: |-
+                    CertTrustStore references a TLS secret whose tls.crt key is mounted
+                    into the agent as a trusted certificate.
+                  properties:
+                    secretName:
+                      description: SecretName is the name of the TLS secret in the
+                        RunnerPool namespace.
+                      type: string
+                  required:
+                  - secretName
+                  type: object
+                type: array
+              extraEnv:
+                description: ExtraEnv holds additional environment variables for the
+                  agent container.
+                items:
+                  description: |-
+                    ExtraEnv is an extra environment variable for the agent container.
+                    Exactly one of Value or ValueFrom must be set.
+                  properties:
+                    name:
+                      pattern: ^[A-Za-z_][A-Za-z0-9_]*$
+                      type: string
+                    value:
+                      type: string
+                    valueFrom:
+                      description: ValueFromSource selects the value from a secret
+                        or config map.
+                      properties:
+                        configMapKeyRef:
+                          description: |-
+                            ConfigMapKeyRef selects a key from a config map.
+                            The key defaults to the environment variable name when omitted.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        secretKeyRef:
+                          description: SecretKeyRef selects a key from a secret.
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                      type: object
+                  required:
+                  - name
+                  type: object
+                type: array
+              image:
+                description: Image is the container image used for runner agent pods.
+                pattern: ^[^\s]+$
+                type: string
+              imagePullPolicy:
+                default: IfNotPresent
+                description: ImagePullPolicy for agent pods.
+                enum:
+                - Always
+                - Never
+                - IfNotPresent
+                type: string
+              initContainerSpec:
+                description: |-
+                  InitContainerSpec configures an init container that fixes volume
+                  permissions before the agent starts (it runs as root and chowns the
+                  mounted PVCs to the agent user).
+                properties:
+                  image:
+                    description: Image used for the init container.
+                    type: string
+                type: object
+              maxAgents:
+                default: 5
+                description: MaxAgents is the maximum number of agents that may run
+                  for this pool.
+                minimum: 1
+                type: integer
+              minAgents:
+                default: 0
+                description: MinAgents is the minimum number of agents that are always
+                  kept running.
+                minimum: 0
+                type: integer
+              patSecretKey:
+                default: token
+                description: PATSecretKey is the key inside PATSecretName that holds
+                  the token.
+                type: string
+              patSecretName:
+                description: |-
+                  PATSecretName is the name of the Kubernetes secret holding the
+                  Azure DevOps personal access token.
+                type: string
+              pollIntervalSeconds:
+                default: 5
+                description: |-
+                  PollIntervalSeconds is how often the operator polls Azure DevOps for
+                  queue state. Must be at least 5 seconds.
+                minimum: 5
+                type: integer
+              pool:
+                default: default
+                description: Pool is the Azure DevOps agent pool name.
+                type: string
+              securityContext:
+                description: SecurityContext controls the user the agent runs as.
+                properties:
+                  fsGroup:
+                    format: int64
+                    minimum: 0
+                    type: integer
+                  privileged:
+                    description: Privileged runs the agent container in privileged
+                      mode.
+                    type: boolean
+                  runAsGroup:
+                    default: 1001
+                    format: int64
+                    minimum: 0
+                    type: integer
+                  runAsUser:
+                    default: 1001
+                    format: int64
+                    minimum: 0
+                    type: integer
+                type: object
+              storage:
+                description: Storage configures persistent volumes mounted into agent
+                  pods.
+                items:
+                  description: StorageSpec configures a persistent volume for agent
+                    pods.
+                  properties:
+                    claimName:
+                      description: ClaimName references an existing PVC to mount instead
+                        of creating one.
+                      type: string
+                    createPvc:
+                      default: true
+                      description: |-
+                        CreatePvc tells the operator to create the backing PVC when it does
+                        not exist yet. Existing PVCs with matching labels are reused.
+                      type: boolean
+                    deleteWithAgent:
+                      description: |-
+                        DeleteWithAgent deletes the PVC when its agent is removed.
+                        Ignored when CreatePvc is false.
+                      type: boolean
+                    mountPath:
+                      description: |-
+                        MountPath is where the volume is mounted inside the agent container.
+                        Must be an absolute path.
+                      pattern: ^\/[a-zA-Z0-9\/._-]+$
+                      type: string
+                    name:
+                      description: |-
+                        Name is the logical name of the volume. The PVC backing it is named
+                        <pool>-agent-<index>-<name>.
+                      type: string
+                    optional:
+                      description: Optional lets pod creation proceed when the PVC
+                        cannot be created.
+                      type: boolean
+                    size:
+                      description: |-
+                        Size is the requested storage size (e.g. "10Gi", "500Mi").
+                        Required when CreatePvc is true.
+                      type: string
+                    storageClass:
+                      description: StorageClass is the storage class used when the
+                        operator creates the PVC.
+                      type: string
+                  required:
+                  - mountPath
+                  - name
+                  type: object
+                type: array
+              ttlIdleSeconds:
+                default: 300
+                description: |-
+                  TtlIdleSeconds controls when agents are removed after they stop
+                  working. 0 means "immediately" (one-shot agents: a completed agent is
+                  deleted right away and idle agents are deleted as soon as the queue
+                  is empty). Positive values keep agents around for that many seconds
+                  so they can pick up follow-up jobs.
+                minimum: 0
+                type: integer
+            required:
+            - azUrl
+            - image
+            - patSecretKey
+            - patSecretName
+            - pool
+            type: object
+          status:
+            description: RunnerPoolStatus defines the observed state of a RunnerPool.
+            properties:
+              active:
+                description: Active is true when the pool is connected and being reconciled.
+                type: boolean
+              agentIndexes:
+                additionalProperties:
+                  description: AgentIndexInfo tracks what the operator knows about
+                    one agent index.
+                  properties:
+                    createdAt:
+                      format: date-time
+                      type: string
+                    isMinAgent:
+                      type: boolean
+                    podName:
+                      type: string
+                    pvcNames:
+                      items:
+                        type: string
+                      type: array
+                    status:
+                      type: string
+                  required:
+                  - isMinAgent
+                  - podName
+                  - status
+                  type: object
+                description: |-
+                  AgentIndexes maps each in-use agent index (as a string) to its pod
+                  and PVCs.
+                type: object
+              agents:
+                description: Agents is the list of operator-managed agents in the
+                  pool.
+                items:
+                  description: AgentStatus describes a single Azure DevOps agent of
+                    this pool.
+                  properties:
+                    createdAt:
+                      format: date-time
+                      type: string
+                    id:
+                      type: integer
+                    lastActive:
+                      format: date-time
+                      type: string
+                    name:
+                      type: string
+                    status:
+                      description: |-
+                        Status is the agent state as reported by Azure DevOps
+                        (online, offline, running).
+                      type: string
+                  required:
+                  - id
+                  - name
+                  - status
+                  type: object
+                type: array
+              agentsSummary:
+                description: AgentsSummary is "<agents>/<maxAgents>" for a quick kubectl
+                  glance.
+                type: string
+              conditions:
+                description: |-
+                  Conditions represent the latest available observations of the
+                  RunnerPool state.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              connectionStatus:
+                description: ConnectionStatus is Connected, Disconnected or Error.
+                type: string
+              currentAgentIndex:
+                description: CurrentAgentIndex is the next agent index that would
+                  be allocated.
+                type: integer
+              lastError:
+                type: string
+              lastPolled:
+                format: date-time
+                type: string
+              organizationName:
+                description: OrganizationName is the Azure DevOps organization derived
+                  from spec.azUrl.
+                type: string
+              poolName:
+                description: PoolName is the Azure DevOps pool this RunnerPool manages.
+                type: string
+              queuedJobs:
+                description: QueuedJobs is the number of jobs currently waiting in
+                  the pool queue.
+                type: integer
+              queuedJobsByCap:
+                additionalProperties:
+                  type: integer
+                description: QueuedJobsByCap counts queued jobs per demanded capability.
+                type: object
+              runningAgents:
+                description: |-
+                  RunningAgents is the number of operator-managed agents registered
+                  in Azure DevOps.
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

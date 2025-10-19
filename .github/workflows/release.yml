@@ -1,0 +1,52 @@
+name: Release
+on:
+  push:
+    tags:
+      - v*
+permissions:
+  contents: write
+  packages: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  docker:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Nix
+        uses: DeterminateSystems/determinate-nix-action@v3.24.2
+      - name: Build Image
+        id: image
+        run: |
+          nix build .#docker
+          load_output=$(docker load -i result)
+          echo "$load_output"
+          image_ref=$(echo "$load_output" | sed -n 's/Loaded image: //p')
+          echo "ref=$image_ref" >> "$GITHUB_OUTPUT"
+      - name: Login Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag Image
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/kara
+        run: |
+          docker tag "${{ steps.image.outputs.ref }}" "$IMAGE:${{ github.ref_name }}"
+          docker tag "${{ steps.image.outputs.ref }}" "$IMAGE:latest"
+      - name: Push Image
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/kara
+        run: |
+          docker push "$IMAGE:${{ github.ref_name }}"
+          docker push "$IMAGE:latest"
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: kara ${{ github.ref_name }}
+          generate_release_notes: true

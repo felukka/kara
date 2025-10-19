@@ -1,0 +1,14 @@
+apiVersion: kara.felukka.org/v1
+kind: RunnerPool
+metadata:
+  labels:
+    app.kubernetes.io/name: kara
+    app.kubernetes.io/managed-by: kustomize
+  name: runnerpool-sample
+spec:
+  azUrl: "https://dev.azure.com/your-org"
+  pool: "Default"
+  patSecretName: "kara-pat"
+  image: "mcr.microsoft.com/azure-pipelines/vsts-agent"
+  maxAgents: 5
+  minAgents: 0

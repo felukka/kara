@@ -1,0 +1,72 @@
+---
+site_name: KARA Docs
+repo_url: https://github.com/felukka/kara
+site_url: https://kara.felukka.org
+nav:
+  - Home: index.md
+  - Getting started:
+      - Prerequisites: getting-started/prerequisites.md
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+  - Resources:
+      - RunnerPool: resources/runnerpool.md
+  - Helm charts:
+      - kara: helm/kara.md
+  - Configuration:
+      - Operator: configuration/operator.md
+      - Security: configuration/security.md
+  - Reference:
+      - Troubleshooting: reference/troubleshooting.md
+      - FAQ: reference/faq.md
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/git-alt
+  logo: assets/kara.png
+  favicon: assets/kara.png
+  font:
+    text: Manrope
+    code: JetBrains Mono
+  features:
+    - navigation.footer
+    - search.highlight
+    - navigation.tabs
+    - navigation.top
+    - navigation.expand
+    - content.tabs.link
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Dark mode
+extra_css:
+  - stylesheets/felukka.css
+markdown_extensions:
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+copyright: Copyright &copy; 2026 Felukka.org
